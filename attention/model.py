@@ -3,7 +3,10 @@ import numpy as np
 from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.utils.data as data_utils
- 
+
+
+dtype = torch.cuda
+
 class StructuredSelfAttention(torch.nn.Module):
     """
     The class is an implementation of the paper A Structured Self-Attentive Sentence Embedding including regularization
@@ -128,4 +131,4 @@ class StructuredSelfAttention(torch.nn.Module):
  
        
         """
-        return torch.sum(torch.sum(torch.sum(m**2,1),1)**0.5).type(torch.DoubleTensor)
+        return torch.sum(torch.sum(torch.sum(m**2,1),1)**0.5).type(dtype.DoubleTensor)

@@ -1,6 +1,9 @@
 import torch
 from torch.autograd import Variable
- 
+
+
+dtype = torch.cuda
+
 def train(attention_model,train_loader,criterion,optimizer,epochs = 5,use_regularization = False,C=0,clip=False):
     """
         Training code
@@ -45,22 +48,22 @@ def train(attention_model,train_loader,criterion,optimizer,epochs = 5,use_regula
             if not bool(attention_model.type) :
                 #binary classification
                 #Adding a very small value to prevent BCELoss from outputting NaN's
-                correct+=torch.eq(torch.round(y_pred.type(torch.DoubleTensor).squeeze(1)),y).data.sum()
+                correct+=torch.eq(torch.round(y_pred.type(dtype.DoubleTensor).squeeze(1)),y).data.sum()
                 if use_regularization:
                     try:
-                        loss = criterion(y_pred.type(torch.DoubleTensor).squeeze(1)+1e-8,y) + C * penal/train_loader.batch_size
+                        loss = criterion(y_pred.type(dtype.DoubleTensor).squeeze(1)+1e-8,y) + C * penal/train_loader.batch_size
                        
                     except RuntimeError:
                         raise Exception("BCELoss gets nan values on regularization. Either remove regularization or add very small values")
                 else:
-                    loss = criterion(y_pred.type(torch.DoubleTensor).squeeze(1),y)
+                    loss = criterion(y_pred.type(dtype.DoubleTensor).squeeze(1),y)
                 
             
             else:
                 
-                correct+=torch.eq(torch.max(y_pred,1)[1],y.type(torch.LongTensor)).data.sum()
+                correct+=torch.eq(torch.max(y_pred,1)[1],y.type(dtype.LongTensor)).data.sum()
                 if use_regularization:
-                    loss = criterion(y_pred,y) + (C * penal/train_loader.batch_size).type(torch.FloatTensor)
+                    loss = criterion(y_pred,y) + (C * penal/train_loader.batch_size).type(dtype.FloatTensor)
                 else:
                     loss = criterion(y_pred,y)
                
@@ -99,15 +102,15 @@ def evaluate(attention_model,x_test,y_test):
    
     attention_model.batch_size = x_test.shape[0]
     attention_model.hidden_state = attention_model.init_hidden()
-    x_test_var = Variable(torch.from_numpy(x_test).type(torch.LongTensor))
+    x_test_var = Variable(torch.from_numpy(x_test).type(dtype.LongTensor))
     y_test_pred,_ = attention_model(x_test_var)
     if bool(attention_model.type):
         y_preds = torch.max(y_test_pred,1)[1]
-        y_test_var = Variable(torch.from_numpy(y_test).type(torch.LongTensor))
+        y_test_var = Variable(torch.from_numpy(y_test).type(dtype.LongTensor))
        
     else:
-        y_preds = torch.round(y_test_pred.type(torch.DoubleTensor).squeeze(1))
-        y_test_var = Variable(torch.from_numpy(y_test).type(torch.DoubleTensor))
+        y_preds = torch.round(y_test_pred.type(dtype.DoubleTensor).squeeze(1))
+        y_test_var = Variable(torch.from_numpy(y_test).type(dtype.DoubleTensor))
        
     return torch.eq(y_preds,y_test_var).data.sum()/x_test_var.size(0)
  

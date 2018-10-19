@@ -5,6 +5,8 @@ import numpy as np
 from keras.datasets import imdb
 from keras.preprocessing.sequence import pad_sequences
 import torch.utils.data as data_utils
+
+dtype = torch.cuda
  
 def load_data_set(type,max_len,vocab_size,batch_size):
     """
@@ -48,11 +50,7 @@ def load_data_set(type,max_len,vocab_size,batch_size):
         y_train = y[:n_train]
         x_test = x[n_train:n_train+n_valid]
         y_test = y[n_train:n_train+n_valid]
- 
-        x_train = x_train.cuda()
-        y_train = y_train.cuda()
-        y_test = y_test.cuda()
-        x_test = x_test.cuda()
+
 
 
         #embeddings = load_glove_embeddings("../../GloVe/glove.6B.50d.txt",word_to_id,50)
@@ -60,7 +58,7 @@ def load_data_set(type,max_len,vocab_size,batch_size):
         x_test_pad = pad_sequences(x_test,maxlen=max_len)
  
  
-        train_data = data_utils.TensorDataset(torch.from_numpy(x_train_pad).type(torch.LongTensor),torch.from_numpy(y_train).type(torch.DoubleTensor))
+        train_data = data_utils.TensorDataset(torch.from_numpy(x_train_pad).type(dtype.LongTensor),torch.from_numpy(y_train).type(dtype.DoubleTensor))
         train_loader = data_utils.DataLoader(train_data,batch_size=batch_size,drop_last=True)
         return train_loader,x_test_pad,y_test,word_to_id
        
@@ -81,6 +79,6 @@ def load_data_set(type,max_len,vocab_size,batch_size):
         x_test_pad = pad_sequences(x_test,maxlen=max_len)
  
  
-        train_data = data_utils.TensorDataset(torch.from_numpy(x_train_pad).type(torch.LongTensor),torch.from_numpy(y_train).type(torch.LongTensor))
+        train_data = data_utils.TensorDataset(torch.from_numpy(x_train_pad).type(dtype.LongTensor),torch.from_numpy(y_train).type(dtype.LongTensor))
         train_loader = data_utils.DataLoader(train_data,batch_size=batch_size,drop_last=True)
         return train_loader,train_set,test_set,x_test_pad,word_to_id
