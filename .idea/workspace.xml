@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6a293709-8ebf-4ed7-9a5b-397fec779127" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/attention/model.py" afterPath="$PROJECT_DIR$/attention/model.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/classification.py" afterPath="$PROJECT_DIR$/classification.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -13,7 +13,7 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="model.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="model.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/attention/model.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="295">
@@ -35,11 +35,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="classification.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="classification.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/classification.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="765">
-              <caret line="99" column="129" lean-forward="false" selection-start-line="99" selection-start-column="129" selection-end-line="99" selection-end-column="129" />
+            <state relative-caret-position="286">
+              <caret line="41" column="43" lean-forward="false" selection-start-line="41" selection-start-column="35" selection-end-line="41" selection-end-column="43" />
               <folding>
                 <element signature="e#62#113#0" expanded="true" />
               </folding>
@@ -106,6 +106,7 @@
       <find>dtype</find>
       <find>Variable</find>
       <find>torch.</find>
+      <find>.numpy()</find>
     </findStrings>
     <replaceStrings>
       <replace>dtype.LongTensor</replace>
@@ -126,8 +127,8 @@
         <option value="$PROJECT_DIR$/utils/data_loader.py" />
         <option value="$PROJECT_DIR$/model_params.json" />
         <option value="$PROJECT_DIR$/attention/train.py" />
-        <option value="$PROJECT_DIR$/classification.py" />
         <option value="$PROJECT_DIR$/attention/model.py" />
+        <option value="$PROJECT_DIR$/classification.py" />
       </list>
     </option>
   </component>
@@ -322,22 +323,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/classification.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="765">
-          <caret line="99" column="129" lean-forward="false" selection-start-line="99" selection-start-column="129" selection-end-line="99" selection-end-column="129" />
-          <folding>
-            <element signature="e#62#113#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/attention/model.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="295">
           <caret line="99" column="147" lean-forward="false" selection-start-line="99" selection-start-column="147" selection-end-line="99" selection-end-column="147" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/classification.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="286">
+          <caret line="41" column="43" lean-forward="false" selection-start-line="41" selection-start-column="35" selection-end-line="41" selection-end-column="43" />
+          <folding>
+            <element signature="e#62#113#0" expanded="true" />
           </folding>
         </state>
       </provider>
