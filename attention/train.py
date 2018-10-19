@@ -34,14 +34,14 @@ def train(attention_model,train_loader,criterion,optimizer,epochs = 5,use_regula
         for batch_idx,train in enumerate(train_loader):
  
             attention_model.hidden_state = attention_model.init_hidden()
-            x,y = Variable(train[0]),Variable(train[1])
+            x,y = Variable(train[0]).cuda(),Variable(train[1]).cuda()
             y_pred,att = attention_model(x)
            
             #penalization AAT - I
             if use_regularization:
                 attT = att.transpose(1,2)
                 identity = torch.eye(att.size(1))
-                identity = Variable(identity.unsqueeze(0).expand(train_loader.batch_size,att.size(1),att.size(1)))
+                identity = Variable(identity.unsqueeze(0).expand(train_loader.batch_size,att.size(1),att.size(1))).cuda()
                 penal = attention_model.l2_matrix_norm(att@attT - identity)
            
             
@@ -102,15 +102,15 @@ def evaluate(attention_model,x_test,y_test):
    
     attention_model.batch_size = x_test.shape[0]
     attention_model.hidden_state = attention_model.init_hidden()
-    x_test_var = Variable(torch.from_numpy(x_test).type(dtype.LongTensor))
+    x_test_var = Variable(torch.from_numpy(x_test).type(dtype.LongTensor)).cuda()
     y_test_pred,_ = attention_model(x_test_var)
     if bool(attention_model.type):
         y_preds = torch.max(y_test_pred,1)[1]
-        y_test_var = Variable(torch.from_numpy(y_test).type(dtype.LongTensor))
+        y_test_var = Variable(torch.from_numpy(y_test).type(dtype.LongTensor)).cuda()
        
     else:
         y_preds = torch.round(y_test_pred.type(dtype.DoubleTensor).squeeze(1))
-        y_test_var = Variable(torch.from_numpy(y_test).type(dtype.DoubleTensor))
+        y_test_var = Variable(torch.from_numpy(y_test).type(dtype.DoubleTensor)).cuda()
        
     return torch.eq(y_preds,y_test_var).data.sum()/x_test_var.size(0)
  
