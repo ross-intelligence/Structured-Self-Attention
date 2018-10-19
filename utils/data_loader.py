@@ -49,7 +49,12 @@ def load_data_set(type,max_len,vocab_size,batch_size):
         x_test = x[n_train:n_train+n_valid]
         y_test = y[n_train:n_train+n_valid]
  
- 
+        x_train = x_train.cuda()
+        y_train = y_train.cuda()
+        y_test = y_test.cuda()
+        x_test = x_test.cuda()
+
+
         #embeddings = load_glove_embeddings("../../GloVe/glove.6B.50d.txt",word_to_id,50)
         x_train_pad = pad_sequences(x_train,maxlen=max_len)
         x_test_pad = pad_sequences(x_test,maxlen=max_len)
