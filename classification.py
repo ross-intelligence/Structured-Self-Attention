@@ -67,8 +67,7 @@ MAXLENGTH = model_params['timesteps']
 if classification_type =='binary':
  
     train_loader,x_test_pad,y_test,word_to_id = load_data_set(0,MAXLENGTH,model_params["vocab_size"],model_params['batch_size']) #loading imdb dataset
- 
- 
+
     if params_set["use_embeddings"]:
         embeddings = load_glove_embeddings("glove/glove.6B.50d.txt",word_to_id,50)
     else:
@@ -79,8 +78,8 @@ if classification_type =='binary':
     #Can set use_regularization=True for penalization and clip=True for gradient clipping
     binary_classfication(attention_model,train_loader=train_loader,epochs=params_set["epochs"],use_regularization=params_set["use_regularization"],C=params_set["C"],clip=params_set["clip"])
     classified = True
-    #wts = get_activation_wts(binary_attention_model,Variable(torch.from_numpy(x_test_pad[:]).type(torch.LongTensor)))
-    #print("Attention weights for the testing data in binary classification are:",wts)
+    wts = get_activation_wts(attention_model,Variable(torch.from_numpy(x_test_pad[:]).type(torch.LongTensor)))
+    print("Attention weights for the testing data in binary classification are:",wts)
  
  
 if classification_type == 'multiclass':
@@ -97,6 +96,7 @@ if classification_type == 'multiclass':
     classified=True
     #wts = get_activation_wts(multiclass_attention_model,Variable(torch.from_numpy(x_test_pad[:]).type(torch.LongTensor)))
     #print("Attention weights for the data in multiclass classification are:",wts)
+
 if classified:
     test_last_idx = 100
     wts = get_activation_wts(attention_model,Variable(torch.from_numpy(x_test_pad[:test_last_idx]).type(torch.LongTensor)))
