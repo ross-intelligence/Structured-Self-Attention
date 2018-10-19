@@ -97,7 +97,7 @@ class StructuredSelfAttention(torch.nn.Module):
        
         
     def init_hidden(self):
-        return (Variable(torch.zeros(1,self.batch_size,self.lstm_hid_dim)).cuda(),Variable(torch.zeros(1,self.batch_size,self.lstm_hid_dim))).cuda()
+        return (Variable(torch.zeros(1,self.batch_size,self.lstm_hid_dim)).cuda(),Variable(torch.zeros(1,self.batch_size,self.lstm_hid_dim)).cuda())
        
         
     def forward(self,x):
