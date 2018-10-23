@@ -51,9 +51,10 @@ def train(attention_model,train_loader,criterion,optimizer,epochs = 5,use_regula
                 correct+=torch.eq(torch.round(y_pred.type(dtype.DoubleTensor).squeeze(1)),y).data.sum()
                 if use_regularization:
                     try:
-                        loss = criterion(y_pred.type(dtype.DoubleTensor).squeeze(1)+1e-8,y) + C * penal/train_loader.batch_size
+                        out = torch.clamp(y_pred.type(dtype.DoubleTensor).squeeze(1)+1e-8, 0., 1.)
+                        loss = criterion(out,y) + C * penal/train_loader.batch_size
                        
-                    except RuntimeError:
+                    except RuntimeError as e:
                         raise Exception("BCELoss gets nan values on regularization. Either remove regularization or add very small values")
                 else:
                     loss = criterion(y_pred.type(dtype.DoubleTensor).squeeze(1),y)
@@ -77,11 +78,10 @@ def train(attention_model,train_loader,criterion,optimizer,epochs = 5,use_regula
                 torch.nn.utils.clip_grad_norm_(attention_model.parameters(),0.5)
             optimizer.step()
             n_batches+=1
-           
         print("avg_loss is",total_loss/n_batches)
-        print("Accuracy of the model",correct/(n_batches*train_loader.batch_size))
+        print("Accuracy of the model",correct.to(dtype=torch.float)/(n_batches*train_loader.batch_size))
         losses.append(total_loss/n_batches)
-        accuracy.append(correct/(n_batches*train_loader.batch_size))
+        accuracy.append(correct.to(dtype=torch.float)/(n_batches*train_loader.batch_size))
     return losses,accuracy
  
  
