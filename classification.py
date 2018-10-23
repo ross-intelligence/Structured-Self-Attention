@@ -13,6 +13,10 @@ import datetime, time
  
 classified = False
 classification_type = sys.argv[1]
+if sys.argv[2]:
+  mode = sys.argv[2] #train, test
+else:
+  mode = "train"
 
 dtype = torch.cuda
  
@@ -75,12 +79,19 @@ if classification_type =='binary':
     #Can use pretrained embeddings by passing in the embeddings and setting the use_pretrained_embeddings=True
     attention_model = StructuredSelfAttention(batch_size=train_loader.batch_size,lstm_hid_dim=model_params['lstm_hidden_dimension'],d_a = model_params["d_a"],r=params_set["attention_hops"],vocab_size=len(word_to_id),max_len=MAXLENGTH,type=0,n_classes=1,use_pretrained_embeddings=params_set["use_embeddings"],embeddings=embeddings).cuda()
  
-    #Can set use_regularization=True for penalization and clip=True for gradient clipping
-    binary_classfication(attention_model,train_loader=train_loader,epochs=params_set["epochs"],use_regularization=params_set["use_regularization"],C=params_set["C"],clip=params_set["clip"])
-    classified = True
-    wts = get_activation_wts(attention_model,Variable(torch.from_numpy(x_test_pad[:]).type(dtype.LongTensor)).cuda())
-    print("Attention weights for the testing data in binary classification are:",wts)
- 
+
+    if mode == "train":
+      #Can set use_regularization=True for penalization and clip=True for gradient clipping
+      binary_classfication(attention_model,train_loader=train_loader,epochs=params_set["epochs"],use_regularization=params_set["use_regularization"],C=params_set["C"],clip=params_set["clip"])
+      classified = True
+      wts = get_activation_wts(attention_model,Variable(torch.from_numpy(x_test_pad[:]).type(dtype.LongTensor)).cuda())
+      print("Attention weights for the testing data in binary classification are:",wts)
+    else:
+      model = sys.argv[3]
+      attention_model.load_state_dict(torch.load(model))
+      accuracy = evaluate(attention_model, x_test_pad, y_test)
+      print("Accuracy from test set: {}".format(accuracy))
+
  
 if classification_type == 'multiclass':
     train_loader,train_set,test_set,x_test_pad,word_to_id = load_data_set(1,MAXLENGTH,model_params["vocab_size"],model_params['batch_size']) #load the reuters dataset
@@ -90,7 +101,7 @@ if classification_type == 'multiclass':
     else:
         embeddings = None
     attention_model = StructuredSelfAttention(batch_size=train_loader.batch_size,lstm_hid_dim=model_params['lstm_hidden_dimension'],d_a = model_params["d_a"],r=params_set["attention_hops"],vocab_size=len(word_to_id),max_len=MAXLENGTH,type=1,n_classes=46,use_pretrained_embeddings=params_set["use_embeddings"],embeddings=embeddings)
- 
+    
     #Using regularization and gradient clipping at 0.5 (currently unparameterized)
     multiclass_classification(attention_model,train_loader,epochs=params_set["epochs"],use_regularization=params_set["use_regularization"],C=params_set["C"],clip=params_set["clip"])
     classified=True
@@ -103,7 +114,7 @@ if classified:
     print(wts.size())
     visualize_attention(wts,x_test_pad[:test_last_idx],word_to_id,filename='attention.html')
 
-model_file = "models/model-{}".format(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H-%M-%S'))
-print("Saving to {}...".format(model_file))
-torch.save(attention_model.state_dict(), model_file)
-print("Saved.")
+    model_file = "models/model-{}".format(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H-%M-%S'))
+    print("Saving to {}...".format(model_file))
+    torch.save(attention_model.state_dict(), model_file)
+    print("Saved.")
