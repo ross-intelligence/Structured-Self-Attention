@@ -8,6 +8,8 @@ import torch
 from torch.autograd import Variable
 import sys
 import json
+
+import datetime, time
  
 classified = False
 classification_type = sys.argv[1]
@@ -96,7 +98,12 @@ if classification_type == 'multiclass':
     #print("Attention weights for the data in multiclass classification are:",wts)
 
 if classified:
-    test_last_idx = 100
+    test_last_idx = 1000
     wts = get_activation_wts(attention_model,Variable(torch.from_numpy(x_test_pad[:test_last_idx]).type(dtype.LongTensor)).cuda())
     print(wts.size())
     visualize_attention(wts,x_test_pad[:test_last_idx],word_to_id,filename='attention.html')
+
+model_file = "models/model-{}".format(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H-%M-%S'))
+print("Saving to {}...".format(model_file))
+torch.save(attention_model.state_dict(), model_file)
+print("Saved.")

@@ -112,7 +112,7 @@ def evaluate(attention_model,x_test,y_test):
         y_preds = torch.round(y_test_pred.type(dtype.DoubleTensor).squeeze(1))
         y_test_var = Variable(torch.from_numpy(y_test).type(dtype.DoubleTensor)).cuda()
        
-    return torch.eq(y_preds,y_test_var).data.sum()/x_test_var.size(0)
+    return torch.eq(y_preds,y_test_var).data.sum().to(torch.float)/x_test_var.size(0)
  
 def get_activation_wts(attention_model,x):
     """
