@@ -59,7 +59,8 @@ def load_data_set(type,max_len,vocab_size,batch_size):
  
  
         train_data = data_utils.TensorDataset(torch.from_numpy(x_train_pad).type(dtype.LongTensor),torch.from_numpy(y_train).type(dtype.DoubleTensor))
-        train_loader = data_utils.DataLoader(train_data,batch_size=batch_size,drop_last=True)
+        train_loader = data_utils.DataLoader(train_data,
+            batch_size=batch_size,drop_last=True)
         return train_loader,x_test_pad,y_test,word_to_id
        
     else:

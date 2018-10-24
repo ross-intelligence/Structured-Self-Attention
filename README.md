@@ -1,4 +1,15 @@
-# Structured Self-attentive sentence embeddings 
+# Structured Self-attentive sentence embeddings for COLIEE entailment data.
+
+I'm building on the work done by [kaushalshetty](https://github.com/kaushalshetty) - much thanks! The old readme contents are in the last section of this README.
+
+All data needed to run the code are stored in data/ folder, and are symlinked into the respective directories. This includes zip files, .vector_cache, .data dirs.
+
+To make symlinks work, run `./data_link.sh`
+
+
+
+---
+
 Implementation for the paper A Structured Self-Attentive Sentence Embedding, which is published in ICLR 2017: https://arxiv.org/abs/1703.03130 .
 #### USAGE:
 For binary sentiment classification on imdb dataset run :
@@ -33,6 +44,7 @@ Below is a shot of the visualization on few datapoints.
 
 Training accuracy 93.4%
 Tested on 1000 points with 90.2% accuracy
+
 
 ---
 
