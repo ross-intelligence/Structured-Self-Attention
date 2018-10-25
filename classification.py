@@ -1,7 +1,6 @@
 #You can write your own classification file to use the module
 from attention.model import StructuredSelfAttention
 from attention.train import train,get_activation_wts,evaluate
-from utils.pretrained_glove_embeddings import load_glove_embeddings
 from utils.data_loader import load_data_set
 from visualization.attention_visualization import createHTML
 import torch
@@ -103,12 +102,7 @@ if __name__ == "__main__":
    
   if classification_type == 'multiclass':
       train_loader,train_set,test_set,x_test_pad,word_to_id = load_data_set(1,MAXLENGTH,model_params["vocab_size"],model_params['batch_size']) #load the reuters dataset
-      #Using pretrained embeddings
-      if params_set["use_embeddings"]:
-          embeddings = load_glove_embeddings("glove/glove.6B.50d.txt",word_to_id,50)
-      else:
-          embeddings = None
-      attention_model = StructuredSelfAttention(batch_size=train_loader.batch_size,lstm_hid_dim=model_params['lstm_hidden_dimension'],d_a = model_params["d_a"],r=params_set["attention_hops"],vocab_size=len(word_to_id),max_len=MAXLENGTH,type=1,n_classes=46,use_pretrained_embeddings=params_set["use_embeddings"],embeddings=embeddings)
+      attention_model = StructuredSelfAttention(batch_size=train_loader.batch_size,lstm_hid_dim=model_params['lstm_hidden_dimension'],d_a = model_params["d_a"],r=params_set["attention_hops"],vocab_size=len(word_to_id),max_len=MAXLENGTH,type=1,n_classes=46)
       
       #Using regularization and gradient clipping at 0.5 (currently unparameterized)
       multiclass_classification(attention_model,train_loader,epochs=params_set["epochs"],use_regularization=params_set["use_regularization"],C=params_set["C"],clip=params_set["clip"])
