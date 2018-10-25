@@ -37,15 +37,21 @@ class StructuredSelfAttention(torch.nn.Module):
             Exception
         """
         super(StructuredSelfAttention,self).__init__()
+        import ipdb; ipdb.set_trace()
        
         self.embeddings,emb_dim = self._load_embeddings(use_pretrained_embeddings,embeddings,vocab_size,emb_dim)
+        
         self.lstm = torch.nn.LSTM(emb_dim,lstm_hid_dim,1,batch_first=True)
+        #                           50,       50
         self.linear_first = torch.nn.Linear(lstm_hid_dim,d_a)
+        #                                          50    100 
         self.linear_first.bias.data.fill_(0)
         self.linear_second = torch.nn.Linear(d_a,r)
+        #                                    100,20
         self.linear_second.bias.data.fill_(0)
         self.n_classes = n_classes
         self.linear_final = torch.nn.Linear(lstm_hid_dim,self.n_classes)
+        #                                        50,           1
         self.batch_size = batch_size       
         self.max_len = max_len
         self.lstm_hid_dim = lstm_hid_dim
@@ -53,6 +59,30 @@ class StructuredSelfAttention(torch.nn.Module):
         self.r = r
         self.type = type
                  
+    def forward(self,x):
+        embeddings = self.embeddings(x)       
+        outputs, self.hidden_state = self.lstm(embeddings.view(self.batch_size,self.max_len,-1),self.hidden_state)       
+        # (1024, 200, 50) <- (1024, 200, 50)
+        import ipdb; ipdb.set_trace()
+        x = torch.tanh(self.linear_first(outputs))
+        # (1024, 200, 100) <- (1024, 200, 50)
+        x = self.linear_second(x)       
+        # (1024, 200, 20) <- (1024, 200, 100)
+        x = self.softmax(x,1)       
+        attention = x.transpose(1,2)       
+        # (1024, 20, 200) <- (1024, 200, 20)
+        sentence_embeddings = attention@outputs       
+        # (1024, 20, 50) <- (1024, 20, 200)@(1024, 200, 50)
+        avg_sentence_embeddings = torch.sum(sentence_embeddings,1)/self.r
+       
+        if not bool(self.type):
+            output = torch.sigmoid(self.linear_final(avg_sentence_embeddings))
+           
+            return output,attention
+        else:
+            return F.log_softmax(self.linear_final(avg_sentence_embeddings)),attention
+       
+	   
     def _load_embeddings(self,use_pretrained_embeddings,embeddings,vocab_size,emb_dim):
         """Load the embeddings based on flag"""
        
@@ -100,24 +130,6 @@ class StructuredSelfAttention(torch.nn.Module):
         return (Variable(torch.zeros(1,self.batch_size,self.lstm_hid_dim)).cuda(),Variable(torch.zeros(1,self.batch_size,self.lstm_hid_dim)).cuda())
        
         
-    def forward(self,x):
-        embeddings = self.embeddings(x)       
-        outputs, self.hidden_state = self.lstm(embeddings.view(self.batch_size,self.max_len,-1),self.hidden_state)       
-        x = torch.tanh(self.linear_first(outputs))
-        x = self.linear_second(x)       
-        x = self.softmax(x,1)       
-        attention = x.transpose(1,2)       
-        sentence_embeddings = attention@outputs       
-        avg_sentence_embeddings = torch.sum(sentence_embeddings,1)/self.r
-       
-        if not bool(self.type):
-            output = torch.sigmoid(self.linear_final(avg_sentence_embeddings))
-           
-            return output,attention
-        else:
-            return F.log_softmax(self.linear_final(avg_sentence_embeddings)),attention
-       
-	   
 	#Regularization
     def l2_matrix_norm(self,m):
         """
