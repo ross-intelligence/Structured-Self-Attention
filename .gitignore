@@ -8,3 +8,4 @@ nli/snli_1.0
 .vector_cache
 .venv
 .data/
+.vscode/

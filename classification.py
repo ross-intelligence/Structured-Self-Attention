@@ -13,7 +13,7 @@ import datetime, time
  
 classified = False
 classification_type = sys.argv[1]
-if sys.argv[2]:
+if len(sys.argv) > 2:
   mode = sys.argv[2] #train, test
 else:
   mode = "train"
@@ -68,6 +68,7 @@ def multiclass_classification(attention_model,train_loader,epochs=5,use_regulari
  
 if __name__ == "__main__": 
   MAXLENGTH = model_params['timesteps']
+  print(classification_type)
   if classification_type =='binary':
    
       train_loader,x_test_pad,y_test,word_to_id = load_data_set(0,MAXLENGTH,model_params["vocab_size"],model_params['batch_size']) #loading imdb dataset
