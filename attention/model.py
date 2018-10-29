@@ -13,7 +13,7 @@ class StructuredSelfAttentionForNLI(torch.nn.Module):
     and without pruning. Slight modifications have been done for speedup. 
     """
    
-    def __init__(self,batch_size,lstm_hid_dim,d_a,r,max_len,emb_dim=100,vocab_size=None,type=0,n_classes = 1):
+    def __init__(self,batch_size,lstm_hid_dim,d_a,r,m_dim,max_len,vocab=None,emb_dim=100,n_classes = 1):
         """
         Initializes parameters suggested in paper
  
@@ -22,12 +22,11 @@ class StructuredSelfAttentionForNLI(torch.nn.Module):
             lstm_hid_dim: {int} hidden dimension for lstm
             d_a         : {int} hidden dimension for the dense layer
             r           : {int} attention-hops or attention heads
+            m_dim       : {int} size of the multiplicative interaction weight matrix
             max_len     : {int} number of lstm timesteps
             emb_dim     : {int} embeddings dimension
-            vocab_size  : {int} size of the vocabulary
             use_pretrained_embeddings: {bool} use or train your own embeddings
             embeddings  : {torch.FloatTensor} loaded pretrained embeddings
-            type        : [0,1] 0-->binary_classification 1-->multiclass classification
             n_classes   : {int} number of classes
  
         Returns:
@@ -36,11 +35,10 @@ class StructuredSelfAttentionForNLI(torch.nn.Module):
         Raises:
             Exception
         """
-        super(StructuredSelfAttention,self).__init__()
-        import ipdb; ipdb.set_trace()
+        super(StructuredSelfAttentionForNLI,self).__init__()
+
+        self.embeddings = torch.nn.Embedding.from_pretrained(vocab.vectors,sparse=True)
        
-        self.embeddings,emb_dim = self._load_embeddings(use_pretrained_embeddings,embeddings,vocab_size,emb_dim)
-        
         self.lstm = torch.nn.LSTM(emb_dim,lstm_hid_dim,1,batch_first=True)
         #                           50,       50
         self.linear_first = torch.nn.Linear(lstm_hid_dim,d_a)
@@ -50,68 +48,53 @@ class StructuredSelfAttentionForNLI(torch.nn.Module):
         #                                    100,20
         self.linear_second.bias.data.fill_(0)
 
-        # create 2 weight matrices wfh and wfp: batch_size x lstm_hid_dim x multiplicative_interaction_dim
+        # create 2 weight matrices wfh and wfp: batch_size x lstm_hid_dim x m_dim 
 
         self.n_classes = n_classes
-        self.linear_final = torch.nn.Linear(multiplicative_interaction_dim,self.n_classes)
+        self.linear_final = torch.nn.Linear(m_dim,self.n_classes)
         #                                        50,           1
         self.batch_size = batch_size       
         self.max_len = max_len
         self.lstm_hid_dim = lstm_hid_dim
         self.hidden_state = self.init_hidden()
         self.r = r
-        self.type = type
                  
-    def forward(self,x):
-        embeddings = self.embeddings(x)       
-        outputs, self.hidden_state = self.lstm(embeddings.view(self.batch_size,self.max_len,-1),self.hidden_state)       
+    def forward(self,h, p):
+        h = self.embeddings(h)
+        outputs_h, self.hidden_state = self.lstm(h.view(self.batch_size,self.max_len,-1),self.hidden_state)       
         # (1024, 200, 50) <- (1024, 200, 50)
-        x = torch.tanh(self.linear_first(outputs))
+        h = torch.tanh(self.linear_first(outputs_h))
         # (1024, 200, 100) <- (1024, 200, 50)
-        x = self.linear_second(x)       
+        h = self.linear_second(h)       
         # (1024, 200, 20) <- (1024, 200, 100)
-        x = self.softmax(x,1)       
-        attention = x.transpose(1,2)       
+        h = self.softmax(h,1)       
+        attention_h = h.transpose(1,2)       
         # (1024, 20, 200) <- (1024, 200, 20)
-        sentence_embeddings = attention@outputs       
+        sentence_embeddings_h = attention_h@outputs_h
         # (1024, 20, 50) <- (1024, 20, 200)@(1024, 200, 50)
-        avg_sentence_embeddings = torch.sum(sentence_embeddings,1)/self.r
+        avg_sentence_embeddings_h = torch.sum(sentence_embeddings_h,1)/self.r
 
-        ## Do above for both h and p
+        outputs_p, self.hidden_state = self.lstm(h.view(self.batch_size,self.max_len,-1),self.hidden_state)       
+        # (1024, 200, 50) <- (1024, 200, 50)
+        h = torch.tanh(self.linear_first(outputs_p))
+        # (1024, 200, 100) <- (1024, 200, 50)
+        h = self.linear_second(h)       
+        # (1024, 200, 20) <- (1024, 200, 100)
+        h = self.softmax(h,1)       
+        attention_p = h.transpose(1,2)       
+        # (1024, 20, 200) <- (1024, 200, 20)
+        sentence_embeddings_p = attention_p@outputs_p
+        # (1024, 20, 50) <- (1024, 20, 200)@(1024, 200, 50)
+        avg_sentence_embeddings_p = torch.sum(sentence_embeddings_p,1)/self.r
 
-        # Fh = bmm(avg_sentence_embeddings_h.view(n, 1, emb), self.wfh)
-        # Fp = bmm(avg_sentence_embeddings_h.view(n, 1, emb), self.wfp)
+        Fh = torch.bmm(avg_sentence_embeddings_h.view(n, 1, emb), self.wfh)
+        Fp = torch.bmm(avg_sentence_embeddings_p.view(n, 1, emb), self.wfp)
        
-        # interacted_embeddings = dot(Fh, Fp)
+        interacted_embeddings = torch.dot(Fh, Fp)
        
-        if not bool(self.type):
-            output = torch.sigmoid(self.linear_final(interacted_embeddings))
-           
-            return output,attention
-        else:
-            return F.log_softmax(self.linear_final(interacted_embeddings)),attention
+        return F.log_softmax(self.linear_final(interacted_embeddings)),attention
        
 	   
-    def _load_embeddings(self,use_pretrained_embeddings,embeddings,vocab_size,emb_dim):
-        """Load the embeddings based on flag"""
-       
-        if use_pretrained_embeddings is True and embeddings is None:
-            raise Exception("Send a pretrained word embedding as an argument")
-           
-        if not use_pretrained_embeddings and vocab_size is None:
-            raise Exception("Vocab size cannot be empty")
-   
-        if not use_pretrained_embeddings:
-            word_embeddings = torch.nn.Embedding(vocab_size,emb_dim,padding_idx=0)
-            
-        elif use_pretrained_embeddings:
-            word_embeddings = torch.nn.Embedding(embeddings.size(0), embeddings.size(1))
-            word_embeddings.weight = torch.nn.Parameter(embeddings)
-            emb_dim = embeddings.size(1)
-            
-        return word_embeddings,emb_dim
-       
-        
     def softmax(self,input, axis=1):
         """
         Softmax applied to axis=n
