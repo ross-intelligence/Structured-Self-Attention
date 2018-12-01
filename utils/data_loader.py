@@ -11,6 +11,6 @@ from nli.data_loader import NLIDataloader
 dtype = torch.cuda
  
 def load_data_set(datatype,max_len,vocab_size,batch_size, dataset):
-    nliLoader = NLIDataloader('./multinli_1.0', './snli_1.0', 'glove.6B.50d')
+    nliLoader = NLIDataloader('./nli/multinli_1.0', './nli/snli_1.0', 'glove.6B.50d')
     data, TEXT, LABEL, GENRE = nliLoader.load_nlidata(batch_size, "cuda:0", "spacy", dataset=dataset, max_len=max_len)
     return data, TEXT, LABEL, GENRE

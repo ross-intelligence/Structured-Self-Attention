@@ -81,6 +81,9 @@ if __name__ == "__main__":
                                                   vocab=TEXT.vocab,
                                                   emb_dim=50).cuda()
   
+  print("Model summary: ")
+  print(attention_model)
+  
   #Using regularization and gradient clipping at 0.5 (currently unparameterized)
   multiclass_classification(attention_model,train_loader,epochs=params_set["epochs"],use_regularization=params_set["use_regularization"],C=params_set["C"],clip=params_set["clip"])
   classified=True
@@ -88,10 +91,10 @@ if __name__ == "__main__":
   #print("Attention weights for the data in multiclass classification are:",wts)
 
   if classified:
-      test_last_idx = 1000
-      wts = get_activation_wts(attention_model,Variable(torch.from_numpy(x_test_pad[:test_last_idx]).type(dtype.LongTensor)).cuda())
-      print(wts.size())
-      visualize_attention(wts,x_test_pad[:test_last_idx],word_to_id,filename='attention.html')
+      # test_last_idx = 1000
+      # wts = get_activation_wts(attention_model,Variable(torch.from_numpy(x_test_pad[:test_last_idx]).type(dtype.LongTensor)).cuda())
+      # print(wts.size())
+      # visualize_attention(wts,x_test_pad[:test_last_idx],word_to_id,filename='attention.html')
 
       model_file = "models/model-{}".format(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H-%M-%S'))
       print("Saving to {}...".format(model_file))

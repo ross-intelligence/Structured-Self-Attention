@@ -1,10 +1,10 @@
 {
 	
-	"epochs":4,
+	"epochs":50,
 	"use_regularization":"True",
 	"C":0.03,
 	"clip":"True",
 	"use_embeddings":"True",
-	"attention_hops":5
+	"attention_hops":20
 
 }

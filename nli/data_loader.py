@@ -98,7 +98,7 @@ class NLIDataloader():
 
     def load_snlidata_json(self, text_field, label_field):
         train, dev, test = torchtext.data.TabularDataset.splits(path=self.snli_path, format='json',
-                                                                       train='snli_1.0_dev.jsonl',
+                                                                       train='snli_1.0_train.jsonl',
                                                                        validation='snli_1.0_dev.jsonl',
                                                                        test='snli_1.0_test.jsonl',
                                                                     #    train='train.jsonl',

@@ -9,3 +9,4 @@ nli/snli_1.0
 .venv
 .data/
 .vscode
+models/

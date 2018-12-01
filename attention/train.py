@@ -32,17 +32,23 @@ def train(attention_model,train_loader,criterion,optimizer,epochs = 5,use_regula
         correct = 0
        
         for batch_idx,train in enumerate(train_loader):
+            if (train.hypothesis[0].shape[0] != train_loader.batch_size):
+              continue
+            
             attention_model.hidden_state = attention_model.init_hidden()
             h,p,y = Variable(train.hypothesis[0]).cuda(),Variable(train.premise[0]), Variable(train.label).cuda()
-            y_pred,att = attention_model(h, p)
+            y_pred,att_h,att_p = attention_model(h, p)
            
             #penalization AAT - I
             if use_regularization:
-                attT = att.transpose(1,2)
-                identity = torch.eye(att.size(1))
-                identity = Variable(identity.unsqueeze(0).expand(train_loader.batch_size,att.size(1),att.size(1))).cuda()
-                penal = attention_model.l2_matrix_norm(att@attT - identity)
-           
+                att_hT = att_h.transpose(1,2)
+                identity_h = torch.eye(att_h.size(1))
+                identity_h = Variable(identity_h.unsqueeze(0).expand(train_loader.batch_size,att_h.size(1),att_h.size(1))).cuda()
+
+                att_pT = att_p.transpose(1,2)
+                identity_p = torch.eye(att_p.size(1))
+                identity_p = Variable(identity_p.unsqueeze(0).expand(train_loader.batch_size,att_p.size(1),att_p.size(1))).cuda()
+                penal = (attention_model.l2_matrix_norm(att_h@att_hT - identity_h) + attention_model.l2_matrix_norm(att_p@att_pT - identity_p)) / 2
             
             if not bool(attention_model.type) :
                 #binary classification

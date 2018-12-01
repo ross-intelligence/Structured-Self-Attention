@@ -1,7 +1,9 @@
 import torch,keras
 import numpy as np
+import math
 from torch.autograd import Variable
 import torch.nn.functional as F
+from torch.nn.parameter import Parameter
 import torch.utils.data as data_utils
 
 
@@ -38,7 +40,7 @@ class StructuredSelfAttentionForNLI(torch.nn.Module):
         super(StructuredSelfAttentionForNLI,self).__init__()
 
         self.embeddings = torch.nn.Embedding.from_pretrained(vocab.vectors,sparse=True)
-       
+
         self.lstm = torch.nn.LSTM(emb_dim,lstm_hid_dim,1,batch_first=True)
         #                           50,       50
         self.linear_first = torch.nn.Linear(lstm_hid_dim,d_a)
@@ -49,6 +51,13 @@ class StructuredSelfAttentionForNLI(torch.nn.Module):
         self.linear_second.bias.data.fill_(0)
 
         # create 2 weight matrices wfh and wfp: batch_size x lstm_hid_dim x m_dim 
+        self.wfh = Parameter(torch.Tensor(batch_size, lstm_hid_dim, m_dim))
+        stdv = 1. / math.sqrt(self.wfh.size(1))
+        self.wfh.data.uniform_(-stdv, stdv)
+
+        self.wfp = Parameter(torch.Tensor(batch_size, lstm_hid_dim, m_dim))
+        stdv = 1. / math.sqrt(self.wfp.size(1))
+        self.wfp.data.uniform_(-stdv, stdv)
 
         self.n_classes = n_classes
         self.linear_final = torch.nn.Linear(m_dim,self.n_classes)
@@ -56,6 +65,7 @@ class StructuredSelfAttentionForNLI(torch.nn.Module):
         self.batch_size = batch_size       
         self.max_len = max_len
         self.lstm_hid_dim = lstm_hid_dim
+        self.emb_dim = emb_dim
         self.hidden_state = self.init_hidden()
         self.r = r
                  
@@ -74,25 +84,26 @@ class StructuredSelfAttentionForNLI(torch.nn.Module):
         # (1024, 20, 50) <- (1024, 20, 200)@(1024, 200, 50)
         avg_sentence_embeddings_h = torch.sum(sentence_embeddings_h,1)/self.r
 
-        outputs_p, self.hidden_state = self.lstm(h.view(self.batch_size,self.max_len,-1),self.hidden_state)       
+        p = self.embeddings(p)
+        outputs_p, self.hidden_state = self.lstm(p.view(self.batch_size,self.max_len,-1),self.hidden_state)       
         # (1024, 200, 50) <- (1024, 200, 50)
-        h = torch.tanh(self.linear_first(outputs_p))
+        p = torch.tanh(self.linear_first(outputs_p))
         # (1024, 200, 100) <- (1024, 200, 50)
-        h = self.linear_second(h)       
+        p = self.linear_second(p)       
         # (1024, 200, 20) <- (1024, 200, 100)
-        h = self.softmax(h,1)       
-        attention_p = h.transpose(1,2)       
+        p = self.softmax(p,1)       
+        attention_p = p.transpose(1,2)       
         # (1024, 20, 200) <- (1024, 200, 20)
         sentence_embeddings_p = attention_p@outputs_p
         # (1024, 20, 50) <- (1024, 20, 200)@(1024, 200, 50)
         avg_sentence_embeddings_p = torch.sum(sentence_embeddings_p,1)/self.r
-
-        Fh = torch.bmm(avg_sentence_embeddings_h.view(n, 1, emb), self.wfh)
-        Fp = torch.bmm(avg_sentence_embeddings_p.view(n, 1, emb), self.wfp)
+        
+        Fh = torch.bmm(avg_sentence_embeddings_h.view(self.batch_size, 1, self.emb_dim), self.wfh).squeeze()
+        Fp = torch.bmm(avg_sentence_embeddings_p.view(self.batch_size, 1, self.emb_dim), self.wfp).squeeze()
        
-        interacted_embeddings = torch.dot(Fh, Fp)
+        interacted_embeddings = torch.mul(Fh, Fp)
        
-        return F.log_softmax(self.linear_final(interacted_embeddings)),attention
+        return F.log_softmax(self.linear_final(interacted_embeddings)),attention_p,attention_h
        
 	   
     def softmax(self,input, axis=1):
